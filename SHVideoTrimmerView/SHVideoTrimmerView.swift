@@ -21,9 +21,10 @@ class SHVideoTrimmerView: UIView {
             return avAsset != nil ? CMTimeGetSeconds(avAsset!.duration) : nil
         }
     }
-
     
-//    var collectionView: UICollectionView = UICollectionView(frame: CGRectZero)
+    var thumbnailViews = [UIImageView]()
+    var imageSetCount = 0
+
     
     init(frame: CGRect, avAsset: AVAsset) {
         super.init(frame: frame)
@@ -34,6 +35,8 @@ class SHVideoTrimmerView: UIView {
         print(size)
         
         getThumbnailFrames(size!)
+        
+        self.layer.bou
     
     }
     
@@ -43,7 +46,6 @@ class SHVideoTrimmerView: UIView {
     
     
     private func setup() {
-//        collectionView.frame = CGRectMake(0, 0, frame.width, frame.height)
         
     }
     
@@ -69,6 +71,9 @@ class SHVideoTrimmerView: UIView {
     private func getThumbnailFrames(thumbnailSize: CGSize) {
         
         let thumbnailCount = ceil(self.frame.width / thumbnailSize.width)
+        
+        createThumbnailViews(Int(thumbnailCount), size: thumbnailSize)
+        
         let timeInclement = duration! / Float64(thumbnailCount)
         
         var timesForThumbnails = [Float64]()
@@ -79,17 +84,44 @@ class SHVideoTrimmerView: UIView {
         print(duration)
         print(timesForThumbnails)
         imageGenerator!.appliesPreferredTrackTransform = true // return true orientated video resolution
-        imageGenerator!.generateCGImagesAsynchronouslyForTimes(timesForThumbnails) {
+        imageGenerator!.generateCGImagesAsynchronouslyForTimes(timesForThumbnails) { [weak self]
             (cmTime1: CMTime, cgimage: CGImage?, cmTime2: CMTime, result: AVAssetImageGeneratorResult, error: NSError?) in
             
-            if error == nil && result == AVAssetImageGeneratorResult.Succeeded{
-                if cgimage != nil {
-
-                    let uiimage = UIImage(CGImage: cgimage!, scale: 1.0, orientation: UIImageOrientation.Up)
-                    
+            if let strongSelf = self {
+                if error == nil && result == AVAssetImageGeneratorResult.Succeeded{
+                    if cgimage != nil {
+                        
+                        let uiimage = UIImage(CGImage: cgimage!, scale: 1.0, orientation: UIImageOrientation.Up)
+                        
+                        dispatch_async(dispatch_get_main_queue(), { 
+                            strongSelf.thumbnailViews[strongSelf.imageSetCount].image = uiimage
+                            strongSelf.imageSetCount += 1
+                        })
+                        
+                        
+                    }
                 }
             }
+            
+
         }
+    }
+    
+    
+    private func createThumbnailViews(count: Int, size: CGSize) -> [UIImageView] {
+        
+        for index in 0..<count {
+            let thumbnailView = UIImageView(frame: CGRectZero)
+            thumbnailView.contentMode = .ScaleAspectFit
+            thumbnailView.clipsToBounds = true
+            thumbnailView.frame.size = size
+            thumbnailView.frame.origin = CGPointMake(CGFloat(index) * size.width, 0)
+            thumbnailView.backgroundColor = UIColor.lightGrayColor()
+            self.thumbnailViews.append(thumbnailView)
+            self.addSubview(thumbnailView)
+        }
+        
+        return self.thumbnailViews
     }
     
     

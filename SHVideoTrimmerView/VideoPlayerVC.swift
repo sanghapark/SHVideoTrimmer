@@ -19,6 +19,8 @@ class VideoPlayerVC: UIViewController {
     
     var videoPath: String?
     
+    var trimmerView: SHVideoTrimmerView?
+    
     
     var playerView = UIView(frame: CGRectZero)
     var player: AVPlayer?
@@ -69,12 +71,18 @@ class VideoPlayerVC: UIViewController {
             })
         }
         
-        PHImageManager.defaultManager().requestAVAssetForVideo(self.asset!, options: nil) { (avAsset: AVAsset?, audioMix: AVAudioMix?, info: [NSObject : AnyObject]?) in
+        PHImageManager.defaultManager().requestAVAssetForVideo(self.asset!, options: nil) { [weak self]
+            (avAsset: AVAsset?, audioMix: AVAudioMix?, info: [NSObject : AnyObject]?) in
             
-            if avAsset != nil {
-                let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height / 20)
-                let view = SHVideoTrimmerView(frame: rect, avAsset: avAsset!)
+            if let strongSelf = self {
+                if avAsset != nil {
+                    let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height / 20)
+                    strongSelf.trimmerView = SHVideoTrimmerView(frame: rect, avAsset: avAsset!)
+                    strongSelf.trimmerView!.backgroundColor = UIColor.blueColor().colorWithAlphaComponent(0.5)
+                    strongSelf.view.addSubview(strongSelf.trimmerView!)
+                }
             }
+
         }
         
         
