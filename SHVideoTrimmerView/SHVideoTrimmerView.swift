@@ -10,7 +10,12 @@ import UIKit
 import AVFoundation
 
 class SHVideoTrimmerView: UIView {
-
+    
+    final let handleWidth: CGFloat = 15
+    
+    var trimView = UIView(frame: CGRectZero)
+    var leftHandleView = UIView(frame: CGRectZero)
+    var rightHandView = UIView(frame: CGRectZero)
     
     var avAsset: AVAsset?
     var imageGenerator: AVAssetImageGenerator?
@@ -32,12 +37,28 @@ class SHVideoTrimmerView: UIView {
         self.imageGenerator = AVAssetImageGenerator(asset: avAsset)
 
         let size = getThumbnailFrameSize()
-        print(size)
         
         getThumbnailFrames(size!)
         
-        self.layer.bou
-    
+
+        
+        
+        trimView.frame = CGRectMake(0, 0, frame.width, frame.height)
+        trimView.layer.borderColor = UIColor.yellowColor().CGColor
+        trimView.layer.borderWidth = 1.0
+        trimView.layer.cornerRadius = trimView.frame.height / 10
+        trimView.clipsToBounds = true
+        addSubview(trimView)
+        
+        leftHandleView.frame = CGRectMake(0, 0, 15, frame.height)
+        leftHandleView.backgroundColor = UIColor.yellowColor()
+        trimView.addSubview(leftHandleView)
+
+        
+        rightHandView.frame = CGRectMake(frame.width - handleWidth, 0, 15, frame.height)
+        rightHandView.backgroundColor = UIColor.yellowColor()
+        trimView.addSubview(rightHandView)
+//        rightHandView.layer.zPosition = 1
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -70,7 +91,7 @@ class SHVideoTrimmerView: UIView {
     
     private func getThumbnailFrames(thumbnailSize: CGSize) {
         
-        let thumbnailCount = ceil(self.frame.width / thumbnailSize.width)
+        let thumbnailCount = ceil((self.frame.width - (2 * self.handleWidth)) / thumbnailSize.width)
         
         createThumbnailViews(Int(thumbnailCount), size: thumbnailSize)
         
@@ -91,9 +112,10 @@ class SHVideoTrimmerView: UIView {
                 if error == nil && result == AVAssetImageGeneratorResult.Succeeded{
                     if cgimage != nil {
                         
-                        let uiimage = UIImage(CGImage: cgimage!, scale: 1.0, orientation: UIImageOrientation.Up)
                         
-                        dispatch_async(dispatch_get_main_queue(), { 
+                        
+                        dispatch_async(dispatch_get_main_queue(), { [strongSelf]
+                            let uiimage = UIImage(CGImage: cgimage!, scale: 1.0, orientation: UIImageOrientation.Up)
                             strongSelf.thumbnailViews[strongSelf.imageSetCount].image = uiimage
                             strongSelf.imageSetCount += 1
                         })
@@ -111,11 +133,23 @@ class SHVideoTrimmerView: UIView {
     private func createThumbnailViews(count: Int, size: CGSize) -> [UIImageView] {
         
         for index in 0..<count {
+            
             let thumbnailView = UIImageView(frame: CGRectZero)
-            thumbnailView.contentMode = .ScaleAspectFit
             thumbnailView.clipsToBounds = true
-            thumbnailView.frame.size = size
-            thumbnailView.frame.origin = CGPointMake(CGFloat(index) * size.width, 0)
+//            thumbnailView.frame.size = size
+//            thumbnailView.contentMode = .ScaleAspectFit
+            
+            let viewEndX = CGFloat(index) * size.width + size.width + handleWidth
+            
+            if viewEndX > frame.width - handleWidth {
+                thumbnailView.frame.size = CGSizeMake(size.width - (handleWidth - (frame.width - viewEndX)), size.height)
+                thumbnailView.contentMode = .ScaleAspectFill
+            } else {
+                thumbnailView.frame.size = size
+                thumbnailView.contentMode = .ScaleAspectFit
+            }
+            
+            thumbnailView.frame.origin = CGPointMake(CGFloat(index) * size.width + handleWidth, 0)
             thumbnailView.backgroundColor = UIColor.lightGrayColor()
             self.thumbnailViews.append(thumbnailView)
             self.addSubview(thumbnailView)
@@ -126,15 +160,6 @@ class SHVideoTrimmerView: UIView {
     
     
 
-    private func getFrames() -> [UIImage] {
-        
-        let images = [UIImage]()
-        
-        
-        
-        
-        return images
-    }
 }
 
 
