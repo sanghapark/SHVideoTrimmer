@@ -42,8 +42,8 @@ class VideoPlayerVC: UIViewController {
         
         let asset = PHAsset.fetchAssetsWithMediaType(.Video, options: nil)
         if asset.count > 0 {
-            if let phAsset = asset[0] as? PHAsset {
-                
+            if let phAsset = asset[asset.count-1] as? PHAsset {
+                self.asset = phAsset
                 phAsset.getAssetUrl({ [phAsset] (url) in
                     phAsset.getResolution({ (dimension, orientation) in
                         self.videoDimension = dimension
@@ -68,6 +68,16 @@ class VideoPlayerVC: UIViewController {
                 
             })
         }
+        
+        PHImageManager.defaultManager().requestAVAssetForVideo(self.asset!, options: nil) { (avAsset: AVAsset?, audioMix: AVAudioMix?, info: [NSObject : AnyObject]?) in
+            
+            if avAsset != nil {
+                let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height / 20)
+                let view = SHVideoTrimmerView(frame: rect, avAsset: avAsset!)
+            }
+        }
+        
+        
     }
 
     
@@ -254,58 +264,5 @@ extension PHAsset {
                 }
             })
         }
-    }
-}
-
-extension AVAsset {
-    
-    func videoOrientation() -> (orientation: UIInterfaceOrientation, device: AVCaptureDevicePosition) {
-        var orientation: UIInterfaceOrientation = .Unknown
-        var device: AVCaptureDevicePosition = .Unspecified
-        
-        let tracks :[AVAssetTrack] = self.tracksWithMediaType(AVMediaTypeVideo)
-        if let videoTrack = tracks.first {
-            
-            let t = videoTrack.preferredTransform
-            
-            if (t.a == 0 && t.b == 1.0 && t.d == 0) {
-                orientation = .Portrait
-                
-                if t.c == 1.0 {
-                    device = .Front
-                } else if t.c == -1.0 {
-                    device = .Back
-                }
-            }
-            else if (t.a == 0 && t.b == -1.0 && t.d == 0) {
-                orientation = .PortraitUpsideDown
-                
-                if t.c == -1.0 {
-                    device = .Front
-                } else if t.c == 1.0 {
-                    device = .Back
-                }
-            }
-            else if (t.a == 1.0 && t.b == 0 && t.c == 0) {
-                orientation = .LandscapeRight
-                
-                if t.d == -1.0 {
-                    device = .Front
-                } else if t.d == 1.0 {
-                    device = .Back
-                }
-            }
-            else if (t.a == -1.0 && t.b == 0 && t.c == 0) {
-                orientation = .LandscapeLeft
-                
-                if t.d == 1.0 {
-                    device = .Front
-                } else if t.d == -1.0 {
-                    device = .Back
-                }
-            }
-        }
-        
-        return (orientation, device)
     }
 }
