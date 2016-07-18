@@ -86,6 +86,8 @@ class SHVideoTrimmerView: UIView {
         rightShadingView.backgroundColor = UIColor.blackColor().colorWithAlphaComponent(0.7)
         addSubview(leftShadingView)
         addSubview(rightShadingView)
+        
+        layer.zPosition = 1
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -130,7 +132,7 @@ class SHVideoTrimmerView: UIView {
             self.trimView.frame = CGRectMake(view.frame.origin.x, 0, (self.rightHandView.frame.origin.x + self.rightHandView.frame.width) - view.frame.origin.x, self.trimView.frame.height)
 
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
-            leftShadingView.frame = CGRectMake(handleWidth, 0, leftHandleView.frame.origin.x - handleWidth >= 0 ? leftHandleView.frame.origin.x - handleWidth : 0, frame.height)
+            leftShadingView.frame = CGRectMake(0, 0, leftHandleView.frame.origin.x - handleWidth >= 0 ? leftHandleView.frame.origin.x : 0, frame.height)
             print(leftShadingView.frame)
         }
     }
@@ -201,9 +203,6 @@ class SHVideoTrimmerView: UIView {
         for index in 0..<Int(thumbnailCount) {
             timesForThumbnails.append(timeInclement * Float64(index))
         }
-        
-        print(duration)
-        print(timesForThumbnails)
         imageGenerator!.appliesPreferredTrackTransform = true // return true orientated video resolution
         imageGenerator!.generateCGImagesAsynchronouslyForTimes(timesForThumbnails) { [weak self]
             (cmTime1: CMTime, cgimage: CGImage?, cmTime2: CMTime, result: AVAssetImageGeneratorResult, error: NSError?) in
@@ -211,9 +210,6 @@ class SHVideoTrimmerView: UIView {
             if let strongSelf = self {
                 if error == nil && result == AVAssetImageGeneratorResult.Succeeded{
                     if cgimage != nil {
-                        
-                        
-                        
                         dispatch_async(dispatch_get_main_queue(), { [strongSelf]
                             let uiimage = UIImage(CGImage: cgimage!, scale: 1.0, orientation: UIImageOrientation.Up)
                             strongSelf.thumbnailViews[strongSelf.imageSetCount].image = uiimage
