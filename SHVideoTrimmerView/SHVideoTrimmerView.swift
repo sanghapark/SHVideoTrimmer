@@ -48,7 +48,7 @@ class SHVideoTrimmerView: UIView {
         
         trimView.frame = CGRectMake(0, 0, frame.width, frame.height)
         trimView.layer.borderColor = UIColor.yellowColor().CGColor
-        trimView.layer.borderWidth = 1.0
+        trimView.layer.borderWidth = 2.0
         trimView.layer.cornerRadius = 1.0
         addSubview(trimView)
         
@@ -57,6 +57,11 @@ class SHVideoTrimmerView: UIView {
         leftHandleView.userInteractionEnabled = true
         leftHandleView.layer.cornerRadius = 1.0
         addSubview(leftHandleView)
+        
+        let leftKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
+        leftKnobView.backgroundColor = UIColor.darkGrayColor()
+        leftKnobView.center = leftHandleView.center
+        leftHandleView.addSubview(leftKnobView)
         
         let leftPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.leftHandlePan))
         leftHandleView.addGestureRecognizer(leftPanGestureRecognizer)
@@ -67,6 +72,12 @@ class SHVideoTrimmerView: UIView {
         rightHandView.userInteractionEnabled = true
         rightHandView.layer.cornerRadius = 1.0
         addSubview(rightHandView)
+        
+        let rightKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
+        rightKnobView.backgroundColor = UIColor.darkGrayColor()
+        rightKnobView.center = CGPointMake(rightHandView.frame.width / 2, rightHandView.frame.height / 2)
+        print(rightHandView.center)
+        rightHandView.addSubview(rightKnobView)
         
         let rightPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.rightHandlePan))
         rightHandView.addGestureRecognizer(rightPanGestureRecognizer)
@@ -252,6 +263,22 @@ class SHVideoTrimmerView: UIView {
     
     
 
+}
+
+
+class TriangleView: UIView {
+    override func drawRect(rect: CGRect) {
+        let ctx : CGContextRef = UIGraphicsGetCurrentContext()!
+        
+        CGContextBeginPath(ctx)
+        CGContextMoveToPoint(ctx, CGRectGetMinX(rect), CGRectGetMaxY(rect))
+        CGContextAddLineToPoint(ctx, CGRectGetMaxX(rect), CGRectGetMaxY(rect))
+        CGContextAddLineToPoint(ctx, (CGRectGetMaxX(rect)/2.0), CGRectGetMinY(rect))
+        CGContextClosePath(ctx)
+        
+        CGContextSetRGBFillColor(ctx, 1.0, 0.5, 0.0, 0.60);
+        CGContextFillPath(ctx);
+    }
 }
 
 
