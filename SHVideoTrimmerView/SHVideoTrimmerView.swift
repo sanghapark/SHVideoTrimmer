@@ -17,6 +17,8 @@ class SHVideoTrimmerView: UIView {
     var leftHandleView = UIView(frame: CGRectZero)
     var rightHandView = UIView(frame: CGRectZero)
     
+//    var trimSliderView = TrimSliderView(frame: CGRectZero)
+    
     var avAsset: AVAsset?
     var imageGenerator: AVAssetImageGenerator?
     
@@ -41,24 +43,34 @@ class SHVideoTrimmerView: UIView {
         getThumbnailFrames(size!)
         
 
-        
+//        trimSliderView.frame = CGRectMake(0, 0, frame.width, frame.height)
+//        addSubview(trimSliderView)
         
         trimView.frame = CGRectMake(0, 0, frame.width, frame.height)
         trimView.layer.borderColor = UIColor.yellowColor().CGColor
         trimView.layer.borderWidth = 1.0
-        trimView.layer.cornerRadius = trimView.frame.height / 10
-        trimView.clipsToBounds = true
+        trimView.layer.cornerRadius = 1.0
+//        trimView.layer.cornerRadius = trimView.frame.height / 5
         addSubview(trimView)
         
         leftHandleView.frame = CGRectMake(0, 0, 15, frame.height)
         leftHandleView.backgroundColor = UIColor.yellowColor()
-        trimView.addSubview(leftHandleView)
+        leftHandleView.userInteractionEnabled = true
+        leftHandleView.layer.cornerRadius = 1.0
+        addSubview(leftHandleView)
+        
+        let leftPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.leftHandlePan))
+        leftHandleView.addGestureRecognizer(leftPanGestureRecognizer)
 
         
         rightHandView.frame = CGRectMake(frame.width - handleWidth, 0, 15, frame.height)
         rightHandView.backgroundColor = UIColor.yellowColor()
-        trimView.addSubview(rightHandView)
-//        rightHandView.layer.zPosition = 1
+        rightHandView.userInteractionEnabled = true
+        rightHandView.layer.cornerRadius = 1.0
+        addSubview(rightHandView)
+        
+        let rightPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.rightHandlePan))
+        rightHandView.addGestureRecognizer(rightPanGestureRecognizer)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -71,6 +83,75 @@ class SHVideoTrimmerView: UIView {
     }
     
     
+
+    func leftHandlePan(gestureRecognizer: UIPanGestureRecognizer) {
+        guard let view = gestureRecognizer.view else { return }
+        guard let superview = view.superview else { return }
+        
+        if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
+                
+            let translation = gestureRecognizer.translationInView(superview)
+            
+            if translation.x > 0 {
+                let futureOriginX = view.frame.origin.x + translation.x
+                let delta = rightHandView.frame.origin.x - (futureOriginX + view.frame.width)
+                if delta > widthForOneSecond() {
+                    if view.frame.origin.x >= 0 {
+                        view.center = CGPointMake(view.center.x + translation.x, view.center.y)
+                        
+                    } else {
+                        view.center = CGPointMake(self.handleWidth, view.center.y)
+                    }
+                    
+                }
+            } else {
+                let futureOriginX = view.frame.origin.x + translation.x
+                if futureOriginX <= 0 {
+                    view.frame.origin.x = 0
+                } else {
+                    view.center = CGPointMake(view.center.x + translation.x, view.center.y)
+                }
+            }
+            self.trimView.frame = CGRectMake(view.frame.origin.x, 0, (self.rightHandView.frame.origin.x + self.rightHandView.frame.width) - view.frame.origin.x, self.trimView.frame.height)
+
+            gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
+        }
+    }
+    
+    
+    func rightHandlePan(gestureRecognizer: UIPanGestureRecognizer) {
+
+        
+        guard let view = gestureRecognizer.view else { return }
+        guard let superview = view.superview else { return }
+        
+        if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
+            
+            let translation = gestureRecognizer.translationInView(superview)
+            
+            if translation.x < 0 {
+                let futureOriginX = view.frame.origin.x + translation.x
+                let delta = futureOriginX - (leftHandleView.frame.origin.x + leftHandleView.frame.width)
+                if delta > widthForOneSecond() {
+                    if frame.height <= futureOriginX + view.frame.width {
+                        view.center = CGPointMake(view.center.x + translation.x, view.center.y)
+                    } else {
+                        view.frame.origin.x = self.frame.width - self.handleWidth
+                    }
+                }
+            } else {
+                let futureOriginX = view.frame.origin.x + translation.x
+                if futureOriginX + view.frame.width > frame.width{
+                    view.frame.origin.x = self.frame.width - self.handleWidth
+                } else {
+                    view.center = CGPointMake(view.center.x + translation.x, view.center.y)
+                }
+            }
+            self.trimView.frame = CGRectMake(self.leftHandleView.frame.origin.x, 0, (view.frame.origin.x + view.frame.width) - self.leftHandleView.frame.origin.x, self.trimView.frame.height)
+
+            gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
+        }
+    }
     
     private func getThumbnailFrameSize() -> CGSize? {
         guard let track = self.avAsset!.tracksWithMediaType(AVMediaTypeVideo).first else { return nil}
@@ -159,6 +240,98 @@ class SHVideoTrimmerView: UIView {
     }
     
     
+    func widthForOneSecond() -> CGFloat{
+        return (self.frame.width - 2 * handleWidth) / CGFloat(duration!)
+    }
+    
+    
+//    class TrimSliderView : UIView {
+//        
+//        final let handleWidth: CGFloat = 15
+//        
+//        var trimView = UIView(frame: CGRectZero)
+//        var leftHandleView = UIView(frame: CGRectZero)
+//        var rightHandView = UIView(frame: CGRectZero)
+//        
+//        
+//        override init(frame: CGRect) {
+//            super.init(frame: frame)
+//            
+//            self.layer.cornerRadius = trimView.frame.height / 15
+//            self.clipsToBounds = true
+//            
+//            
+//            trimView.frame = CGRectMake(handleWidth, 0, frame.width-(2*handleWidth), frame.height)
+//            trimView.layer.borderColor = UIColor.yellowColor().CGColor
+//            trimView.layer.borderWidth = 1.0
+//
+//            addSubview(trimView)
+//            
+//            leftHandleView.frame = CGRectMake(0, 0, handleWidth, frame.height)
+//            leftHandleView.backgroundColor = UIColor.yellowColor()
+//            leftHandleView.userInteractionEnabled = true
+//            addSubview(leftHandleView)
+//            
+//            let leftPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(TrimSliderView.leftHandlePan))
+//            leftHandleView.addGestureRecognizer(leftPanGestureRecognizer)
+//            
+//            
+//            rightHandView.frame = CGRectMake(frame.width - handleWidth, 0, handleWidth, frame.height)
+//            rightHandView.backgroundColor = UIColor.yellowColor()
+//            rightHandView.userInteractionEnabled = true
+//            addSubview(rightHandView)
+//            
+//            let rightPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(TrimSliderView.rightHandlePan))
+//            rightHandView.addGestureRecognizer(rightPanGestureRecognizer)
+//        }
+//        
+//        required init?(coder aDecoder: NSCoder) {
+//            super.init(coder: aDecoder)
+//        }
+//        
+//        
+//        
+//        
+//        func leftHandlePan(gestureRecognizer: UIPanGestureRecognizer) {
+//            
+//            if let superView = self.superview {
+//                if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
+//                    
+//                    let translation = gestureRecognizer.translationInView(superView)
+//                    
+//                    let newHandleCenterX = gestureRecognizer.view!.center.x + translation.x
+//                    print(newHandleCenterX)
+//                    
+//                    trimView.frame = CGRectMake(newHandleCenterX - handleWidth / 2, 0, rightHandView.frame.origin.x + rightHandView.frame.width, frame.height)
+//                    if newHandleCenterX - (handleWidth/2.0) >= 0 {
+//                        gestureRecognizer.view!.center = CGPointMake(gestureRecognizer.view!.center.x + translation.x, gestureRecognizer.view!.center.y)
+//                    } else {
+//                        gestureRecognizer.view!.center = CGPointMake(handleWidth / 2.0, gestureRecognizer.view!.center.y)
+//                    }
+//                    gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: superView)
+//                }
+//            }
+//            
+//            
+//        }
+//        
+//        
+//        func rightHandlePan(gestureRecognizer: UIPanGestureRecognizer) {
+//            if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
+//                let translation = gestureRecognizer.translationInView(self)
+//                
+//                let newX = gestureRecognizer.view!.center.x + translation.x
+//                if newX + (handleWidth/2.0) <= frame.width {
+//                    
+//                    gestureRecognizer.view!.center = CGPointMake(gestureRecognizer.view!.center.x + translation.x, gestureRecognizer.view!.center.y)
+//                    gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
+//                } else {
+//                    gestureRecognizer.view!.center = CGPointMake(frame.width - handleWidth / 2.0, gestureRecognizer.view!.center.y)
+//                    gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
+//                }
+//            }
+//        }
+//    }
 
 }
 
