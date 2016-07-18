@@ -81,6 +81,7 @@ class VideoPlayerVC: UIViewController {
                         strongSelf.trimmerView = SHVideoTrimmerView(frame: rect, avAsset: avAsset!)
                         strongSelf.trimmerView!.backgroundColor = UIColor.clearColor()
                         strongSelf.view.addSubview(strongSelf.trimmerView!)
+                        strongSelf.trimmerView!.delegate = self
                     })
                 }
             }
@@ -228,6 +229,14 @@ class VideoPlayerVC: UIViewController {
     func itemDidFinishPlaying(notification: NSNotification) {
         playButton.setImage(UIImage(named: "video_play_solid"), forState: .Normal)
         didFinishPlaying = true
+    }
+}
+
+extension VideoPlayerVC: SHVideoTrimmerViewDelegate {
+    func changeStartTime(startTime: Float64) {
+        guard let player = self.player else { return }
+        let cmTime = CMTimeMakeWithSeconds(startTime, 1)
+        player.seekToTime(cmTime)
     }
 }
 

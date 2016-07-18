@@ -9,9 +9,16 @@
 import UIKit
 import AVFoundation
 
+
+protocol SHVideoTrimmerViewDelegate {
+    func changeStartTime(startTime: Float64)
+}
+
 class SHVideoTrimmerView: UIView {
     
     final let handleWidth: CGFloat = 15
+    
+    var delegate: SHVideoTrimmerViewDelegate?
     
     var leftShadingView = UIView(frame: CGRectZero)
     var rightShadingView = UIView(frame: CGRectZero)
@@ -158,6 +165,8 @@ class SHVideoTrimmerView: UIView {
 
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
             leftShadingView.frame = CGRectMake(0, 0, leftHandleView.frame.origin.x - handleWidth >= 0 ? leftHandleView.frame.origin.x : 0, frame.height)
+            
+            delegate?.changeStartTime(startTime)
         }
     }
     
