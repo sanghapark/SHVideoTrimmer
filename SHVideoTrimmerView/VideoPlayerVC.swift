@@ -79,7 +79,7 @@ class VideoPlayerVC: UIViewController {
                     dispatch_async(dispatch_get_main_queue(), { [strongSelf]
                         let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height / 20)
                         strongSelf.trimmerView = SHVideoTrimmerView(frame: rect, avAsset: avAsset!)
-                        strongSelf.trimmerView!.backgroundColor = UIColor.blueColor().colorWithAlphaComponent(0.5)
+                        strongSelf.trimmerView!.backgroundColor = UIColor.clearColor()
                         strongSelf.view.addSubview(strongSelf.trimmerView!)
                     })
                 }
@@ -154,18 +154,18 @@ class VideoPlayerVC: UIViewController {
     
     
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        
-        if toolBar.alpha == 1 {
-            UIView.animateWithDuration(0.25, animations: {
-                self.toolBar.alpha = 0
-            })
-        } else {
-            UIView.animateWithDuration(0.25, animations: {
-                self.toolBar.alpha = 1
-            })
-        }
-    }
+//    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+//        
+//        if toolBar.alpha == 1 {
+//            UIView.animateWithDuration(0.25, animations: {
+//                self.toolBar.alpha = 0
+//            })
+//        } else {
+//            UIView.animateWithDuration(0.25, animations: {
+//                self.toolBar.alpha = 1
+//            })
+//        }
+//    }
     
     
     func createPlayerView(size: CGSize, orientation: UIInterfaceOrientation? = nil) -> UIView {
