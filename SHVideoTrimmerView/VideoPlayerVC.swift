@@ -137,8 +137,9 @@ class VideoPlayerVC: UIViewController {
     func play(sender: UIButton) {
         guard let player = self.player else { return }
         if player.rate == 0 {
+            
             if didFinishPlaying {
-                player.seekToTime(kCMTimeZero)
+                player.seekToTime(CMTimeMakeWithSeconds(trimmerView!.startTime, 1))
             }
             
             player.play()
