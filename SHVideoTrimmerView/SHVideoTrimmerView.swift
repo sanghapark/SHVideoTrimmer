@@ -20,7 +20,23 @@ class SHVideoTrimmerView: UIView {
     var leftHandleView = UIView(frame: CGRectZero)
     var rightHandView = UIView(frame: CGRectZero)
     
-//    var trimSliderView = TrimSliderView(frame: CGRectZero)
+    var startTime: Float64 {
+        get {
+            let numerator = leftHandleView.frame.origin.x + leftHandleView.frame.width - handleWidth
+            let denominator = frame.width - (2 * handleWidth)
+            let frontSkippedTime = Float64(numerator / denominator) * duration!
+            return frontSkippedTime
+        }
+    }
+    
+    var endTime: Float64 {
+        get {
+            let numerator = rightHandView.frame.origin.x - handleWidth
+            let denominator = frame.width - (2 * handleWidth)
+            let backSkippedTime = Float64(numerator / denominator) * duration!
+            return backSkippedTime
+        }
+    }
     
     var avAsset: AVAsset?
     var imageGenerator: AVAssetImageGenerator?
@@ -29,6 +45,12 @@ class SHVideoTrimmerView: UIView {
     var duration: Float64? {
         get {
             return avAsset != nil ? CMTimeGetSeconds(avAsset!.duration) : nil
+        }
+    }
+    
+    var trimmedDuration: Float64 {
+        get {
+            return endTime - startTime
         }
     }
     
@@ -49,13 +71,16 @@ class SHVideoTrimmerView: UIView {
         trimView.frame = CGRectMake(0, 0, frame.width, frame.height)
         trimView.layer.borderColor = UIColor.yellowColor().CGColor
         trimView.layer.borderWidth = 2.0
-        trimView.layer.cornerRadius = 1.0
+        trimView.layer.cornerRadius = 2.0
         addSubview(trimView)
+        
+        let selectionPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.selectionPan))
+        trimView.addGestureRecognizer(selectionPanGestureRecognizer)
         
         leftHandleView.frame = CGRectMake(0, 0, 15, frame.height)
         leftHandleView.backgroundColor = UIColor.yellowColor()
         leftHandleView.userInteractionEnabled = true
-        leftHandleView.layer.cornerRadius = 1.0
+        leftHandleView.layer.cornerRadius = 2.0
         addSubview(leftHandleView)
         
         let leftKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
@@ -70,7 +95,7 @@ class SHVideoTrimmerView: UIView {
         rightHandView.frame = CGRectMake(frame.width - handleWidth, 0, 15, frame.height)
         rightHandView.backgroundColor = UIColor.yellowColor()
         rightHandView.userInteractionEnabled = true
-        rightHandView.layer.cornerRadius = 1.0
+        rightHandView.layer.cornerRadius = 2.0
         addSubview(rightHandView)
         
         let rightKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
@@ -133,7 +158,6 @@ class SHVideoTrimmerView: UIView {
 
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
             leftShadingView.frame = CGRectMake(0, 0, leftHandleView.frame.origin.x - handleWidth >= 0 ? leftHandleView.frame.origin.x : 0, frame.height)
-            print(leftShadingView.frame)
         }
     }
     
@@ -171,6 +195,15 @@ class SHVideoTrimmerView: UIView {
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
             rightShadingView.frame = CGRectMake(rightHandView.frame.origin.x + rightHandView.frame.width, 0, frame.width - (rightHandView.frame.origin.x + rightHandView.frame.width), frame.height)
         }
+    }
+    
+    func selectionPan(gestureRecognizer: UIPanGestureRecognizer) {
+//        guard let view = gestureRecognizer.view else { return }
+//        guard let superview = view.superview else { return }
+//        if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
+//            let translation = gestureRecognizer.translationInView(superview)
+//            
+//        }
     }
     
     
@@ -256,6 +289,8 @@ class SHVideoTrimmerView: UIView {
     func widthForOneSecond() -> CGFloat{
         return (self.frame.width - 2 * handleWidth) / CGFloat(duration!)
     }
+    
+    
     
     
 
