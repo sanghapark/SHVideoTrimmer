@@ -262,25 +262,6 @@ class SHVideoTrimmerView: UIView {
 }
 
 
-class TriangleView: UIView {
-    override func drawRect(rect: CGRect) {
-        let ctx : CGContextRef = UIGraphicsGetCurrentContext()!
-        
-        CGContextBeginPath(ctx)
-        CGContextMoveToPoint(ctx, CGRectGetMinX(rect), CGRectGetMaxY(rect))
-        CGContextAddLineToPoint(ctx, CGRectGetMaxX(rect), CGRectGetMaxY(rect))
-        CGContextAddLineToPoint(ctx, (CGRectGetMaxX(rect)/2.0), CGRectGetMinY(rect))
-        CGContextClosePath(ctx)
-        
-        CGContextSetRGBFillColor(ctx, 1.0, 0.5, 0.0, 0.60);
-        CGContextFillPath(ctx);
-    }
-}
-
-
-
-
-
 
 
 
