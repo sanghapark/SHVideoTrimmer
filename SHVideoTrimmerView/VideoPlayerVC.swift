@@ -144,12 +144,13 @@ class VideoPlayerVC: UIViewController {
             
             if didFinishPlaying {
                 let cmTime = CMTime(value: Int64(trimmerView!.startTimeInMSec), timescale: 1000)
-                player.seekToTime(cmTime)
+//                player.seekToTime(cmTime)
+                player.seekToTime(cmTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero)
             }
-            
+        
             player.play()
+//            trimmerView!.displayCurrentPlayingTime(trimmerView!.startTimeInMSec)
             playButton.setImage(UIImage(named: "video_pause_solid"), forState: .Normal)
-            
             playingTimer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(VideoPlayerVC.updatePlayingTime), userInfo: nil, repeats: true)
             
         } else {
@@ -163,7 +164,10 @@ class VideoPlayerVC: UIViewController {
     func updatePlayingTime() {
         if let time = player?.currentTime() {
             let currentTimeInSeconds = CMTimeGetSeconds(time) * 1000
-            if currentTimeInSeconds >= trimmerView!.endTimeInMSec {
+            if currentTimeInSeconds < trimmerView!.startTimeInMSec {
+                trimmerView!.displayCurrentPlayingTime(trimmerView!.startTimeInMSec)
+            }
+            else if currentTimeInSeconds >= trimmerView!.endTimeInMSec {
                 player!.pause()
                 itemDidFinishPlaying()
             } else {
@@ -240,6 +244,7 @@ class VideoPlayerVC: UIViewController {
         didFinishPlaying = true
         playingTimer?.invalidate()
         playingTimer = nil
+        trimmerView!.hidePositionBar()
     }
 }
 

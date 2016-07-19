@@ -64,6 +64,12 @@ class SHVideoTrimmerView: UIView {
         }
     }
     
+    var thumbnailViewsWidth: CGFloat {
+        get {
+            return frame.width - (2 * handleWidth)
+        }
+    }
+    
     var thumbnailViews = [UIImageView]()
     var imageSetCount = 0
 
@@ -318,12 +324,12 @@ class SHVideoTrimmerView: UIView {
         UIView.animateWithDuration(0.5) {
             self.positionBar.alpha = 1
         }
-        
-        let position = CGFloat(playingTime / durationInMSec!) * (frame.width - 2 * handleWidth)
+    
+        let position = CGFloat(playingTime / durationInMSec!) * thumbnailViewsWidth
         self.positionBar.center.x = position + self.handleWidth
         
-        
-        positionBarTimer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(SHVideoTrimmerView.hidePositionBar), userInfo: nil, repeats: false)
+        print("\(startTimeInMSec), \(playingTime), \(calculateBarPositionIntoTimeInMSec())")
+//        positionBarTimer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(SHVideoTrimmerView.hidePositionBar), userInfo: nil, repeats: false)
     }
     
     func hidePositionBar() {
@@ -334,6 +340,13 @@ class SHVideoTrimmerView: UIView {
     }
     
     
+    func calculateBarPositionIntoTimeInMSec() -> Float64 {
+        
+        let deno = positionBar.center.x - handleWidth
+        let nume = thumbnailViewsWidth
+        
+        return Float64(deno / nume) * durationInMSec!
+    }
 
 }
 
