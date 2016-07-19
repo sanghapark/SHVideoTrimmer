@@ -152,6 +152,8 @@ class SHVideoTrimmerView: UIView {
         guard let view = gestureRecognizer.view else { return }
         guard let superview = view.superview else { return }
         
+        positionBar.alpha = 0
+        
         if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
                 
             let translation = gestureRecognizer.translationInView(superview)
@@ -191,6 +193,8 @@ class SHVideoTrimmerView: UIView {
         
         guard let view = gestureRecognizer.view else { return }
         guard let superview = view.superview else { return }
+        
+        positionBar.alpha = 0
         
         if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
             
