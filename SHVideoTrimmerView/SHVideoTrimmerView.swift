@@ -27,20 +27,23 @@ class SHVideoTrimmerView: UIView {
     var leftHandleView = UIView(frame: CGRectZero)
     var rightHandView = UIView(frame: CGRectZero)
     
-    var startTime: Float64 {
+    var positionBar = UIView(frame: CGRectZero)
+    var positionBarTimer: NSTimer?
+    
+    var startTimeInMSec: Float64 {
         get {
-            let numerator = leftHandleView.frame.origin.x + leftHandleView.frame.width - handleWidth
+            let numerator = leftHandleView.frame.maxX - handleWidth
             let denominator = frame.width - (2 * handleWidth)
-            let frontSkippedTime = Float64(numerator / denominator) * duration!
+            let frontSkippedTime = Float64(numerator / denominator) * durationInMSec!
             return frontSkippedTime
         }
     }
     
-    var endTime: Float64 {
+    var endTimeInMSec: Float64 {
         get {
-            let numerator = rightHandView.frame.origin.x - handleWidth
+            let numerator = rightHandView.frame.minX - handleWidth
             let denominator = frame.width - (2 * handleWidth)
-            let backSkippedTime = Float64(numerator / denominator) * duration!
+            let backSkippedTime = Float64(numerator / denominator) * durationInMSec!
             return backSkippedTime
         }
     }
@@ -49,15 +52,15 @@ class SHVideoTrimmerView: UIView {
     var imageGenerator: AVAssetImageGenerator?
     
     
-    var duration: Float64? {
+    var durationInMSec: Float64? {
         get {
-            return avAsset != nil ? CMTimeGetSeconds(avAsset!.duration) : nil
+            return avAsset != nil ? CMTimeGetSeconds(avAsset!.duration) * 1000 : nil
         }
     }
     
-    var trimmedDuration: Float64 {
+    var trimmedDurationInMSec: Float64 {
         get {
-            return endTime - startTime
+            return endTimeInMSec - startTimeInMSec
         }
     }
     
@@ -119,6 +122,12 @@ class SHVideoTrimmerView: UIView {
         addSubview(leftShadingView)
         addSubview(rightShadingView)
         
+        positionBar.frame = CGRectMake(0, 0, 4, frame.height)
+        positionBar.backgroundColor = UIColor.redColor()
+        positionBar.center.x = leftHandleView.frame.maxX
+        positionBar.alpha = 0
+        addSubview(positionBar)
+        
         layer.zPosition = 1
     }
     
@@ -161,12 +170,12 @@ class SHVideoTrimmerView: UIView {
                     view.center = CGPointMake(view.center.x + translation.x, view.center.y)
                 }
             }
-            self.trimView.frame = CGRectMake(view.frame.origin.x, 0, (self.rightHandView.frame.origin.x + self.rightHandView.frame.width) - view.frame.origin.x, self.trimView.frame.height)
+            self.trimView.frame = CGRectMake(view.frame.origin.x, 0, (self.rightHandView.frame.maxX) - view.frame.origin.x, self.trimView.frame.height)
 
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
-            leftShadingView.frame = CGRectMake(0, 0, leftHandleView.frame.origin.x - handleWidth >= 0 ? leftHandleView.frame.origin.x : 0, frame.height)
+            leftShadingView.frame = CGRectMake(0, 0, leftHandleView.frame.origin.x, frame.height)
             
-            delegate?.changeStartTime(startTime)
+            delegate?.changeStartTime(startTimeInMSec)
         }
     }
     
@@ -202,7 +211,7 @@ class SHVideoTrimmerView: UIView {
             self.trimView.frame = CGRectMake(self.leftHandleView.frame.origin.x, 0, (view.frame.origin.x + view.frame.width) - self.leftHandleView.frame.origin.x, self.trimView.frame.height)
 
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
-            rightShadingView.frame = CGRectMake(rightHandView.frame.origin.x + rightHandView.frame.width, 0, frame.width - (rightHandView.frame.origin.x + rightHandView.frame.width), frame.height)
+            rightShadingView.frame = CGRectMake(rightHandView.frame.maxX, 0, frame.width - rightHandView.frame.maxX, frame.height)
         }
     }
     
@@ -239,11 +248,13 @@ class SHVideoTrimmerView: UIView {
         
         createThumbnailViews(Int(thumbnailCount), size: thumbnailSize)
         
-        let timeInclement = duration! / Float64(thumbnailCount)
+        let timeInclement = durationInMSec! / Float64(thumbnailCount)
         
-        var timesForThumbnails = [Float64]()
+        var timesForThumbnails = [NSValue]()
         for index in 0..<Int(thumbnailCount) {
-            timesForThumbnails.append(timeInclement * Float64(index))
+            let cmTime = CMTime(value: Int64(timeInclement * Float64(index)), timescale: 1000)
+            let nsValue = NSValue(CMTime: cmTime)
+            timesForThumbnails.append(nsValue)
         }
         imageGenerator!.appliesPreferredTrackTransform = true // return true orientated video resolution
         imageGenerator!.generateCGImagesAsynchronouslyForTimes(timesForThumbnails) { [weak self]
@@ -296,10 +307,31 @@ class SHVideoTrimmerView: UIView {
     
     
     func widthForOneSecond() -> CGFloat{
-        return (self.frame.width - 2 * handleWidth) / CGFloat(duration!)
+        return ((self.frame.width - 2 * handleWidth) / CGFloat(durationInMSec!)) * 1000
     }
     
     
+    func displayCurrentPlayingTime(playingTime: Float64) {
+        positionBarTimer?.invalidate()
+        positionBarTimer = nil
+        
+        UIView.animateWithDuration(0.5) {
+            self.positionBar.alpha = 1
+        }
+        
+        let position = CGFloat(playingTime / durationInMSec!) * (frame.width - 2 * handleWidth)
+        self.positionBar.center.x = position + self.handleWidth
+        
+        
+        positionBarTimer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(SHVideoTrimmerView.hidePositionBar), userInfo: nil, repeats: false)
+    }
+    
+    func hidePositionBar() {
+        UIView.animateWithDuration(0.5) {
+            self.positionBar.alpha = 0
+        }
+        
+    }
     
     
 

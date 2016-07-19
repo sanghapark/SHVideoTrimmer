@@ -30,7 +30,7 @@ class VideoPlayerVC: UIViewController {
     var dismissButton = UIButton(frame: CGRectZero)
     var playButton = UIButton(frame: CGRectZero)
     
-    
+    var playingTimer: NSTimer?
 
     override func prefersStatusBarHidden() -> Bool {
         return true
@@ -136,38 +136,42 @@ class VideoPlayerVC: UIViewController {
     
     func play(sender: UIButton) {
         guard let player = self.player else { return }
+        
+        playingTimer?.invalidate()
+        playingTimer = nil
+        
         if player.rate == 0 {
             
             if didFinishPlaying {
-                player.seekToTime(CMTimeMakeWithSeconds(trimmerView!.startTime, 1))
+                let cmTime = CMTime(value: Int64(trimmerView!.startTimeInMSec), timescale: 1000)
+                player.seekToTime(cmTime)
             }
             
             player.play()
             playButton.setImage(UIImage(named: "video_pause_solid"), forState: .Normal)
             
+            playingTimer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(VideoPlayerVC.updatePlayingTime), userInfo: nil, repeats: true)
+            
         } else {
             player.pause()
+            didFinishPlaying = false
             playButton.setImage(UIImage(named: "video_play_solid"), forState: .Normal)
         }
     }
     
     
-    
-    
-    
-    
-//    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-//        
-//        if toolBar.alpha == 1 {
-//            UIView.animateWithDuration(0.25, animations: {
-//                self.toolBar.alpha = 0
-//            })
-//        } else {
-//            UIView.animateWithDuration(0.25, animations: {
-//                self.toolBar.alpha = 1
-//            })
-//        }
-//    }
+    func updatePlayingTime() {
+        if let time = player?.currentTime() {
+            let currentTimeInSeconds = CMTimeGetSeconds(time) * 1000
+            if currentTimeInSeconds >= trimmerView!.endTimeInMSec {
+                player!.pause()
+                itemDidFinishPlaying()
+            } else {
+                trimmerView!.displayCurrentPlayingTime(currentTimeInSeconds)
+            }
+        }
+        
+    }
     
     
     func createPlayerView(size: CGSize, orientation: UIInterfaceOrientation? = nil) -> UIView {
@@ -228,15 +232,21 @@ class VideoPlayerVC: UIViewController {
     }
     
     func itemDidFinishPlaying(notification: NSNotification) {
+        itemDidFinishPlaying()
+    }
+    
+    func itemDidFinishPlaying() {
         playButton.setImage(UIImage(named: "video_play_solid"), forState: .Normal)
         didFinishPlaying = true
+        playingTimer?.invalidate()
+        playingTimer = nil
     }
 }
 
 extension VideoPlayerVC: SHVideoTrimmerViewDelegate {
     func changeStartTime(startTime: Float64) {
         guard let player = self.player else { return }
-        let cmTime = CMTimeMakeWithSeconds(startTime, 1)
+        let cmTime = CMTime(value: Int64(startTime), timescale: 1000)
         player.seekToTime(cmTime)
     }
 }
@@ -284,5 +294,59 @@ extension PHAsset {
                 }
             })
         }
+    }
+}
+
+
+extension AVAsset {
+    
+    func videoOrientation() -> (orientation: UIInterfaceOrientation, device: AVCaptureDevicePosition) {
+        var orientation: UIInterfaceOrientation = .Unknown
+        var device: AVCaptureDevicePosition = .Unspecified
+        
+        let tracks :[AVAssetTrack] = self.tracksWithMediaType(AVMediaTypeVideo)
+        if let videoTrack = tracks.first {
+            
+            let t = videoTrack.preferredTransform
+            
+            if (t.a == 0 && t.b == 1.0 && t.d == 0) {
+                orientation = .Portrait
+                
+                if t.c == 1.0 {
+                    device = .Front
+                } else if t.c == -1.0 {
+                    device = .Back
+                }
+            }
+            else if (t.a == 0 && t.b == -1.0 && t.d == 0) {
+                orientation = .PortraitUpsideDown
+                
+                if t.c == -1.0 {
+                    device = .Front
+                } else if t.c == 1.0 {
+                    device = .Back
+                }
+            }
+            else if (t.a == 1.0 && t.b == 0 && t.c == 0) {
+                orientation = .LandscapeRight
+                
+                if t.d == -1.0 {
+                    device = .Front
+                } else if t.d == 1.0 {
+                    device = .Back
+                }
+            }
+            else if (t.a == -1.0 && t.b == 0 && t.c == 0) {
+                orientation = .LandscapeLeft
+                
+                if t.d == 1.0 {
+                    device = .Front
+                } else if t.d == -1.0 {
+                    device = .Back
+                }
+            }
+        }
+        
+        return (orientation, device)
     }
 }
