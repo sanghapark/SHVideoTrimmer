@@ -3,6 +3,8 @@
 
 You can select a certain interval of video and trim it out.
 
+![ScreenShot](/img/img1.png)
+
 **How to use**
 ```
 let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, 35)
