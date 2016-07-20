@@ -11,11 +11,14 @@ import AVFoundation
 
 
 protocol SHVideoTrimmerViewDelegate {
-    func changeStartTime(startTime: Float64)
+    func didChangeStartTime(startTime: Float64)
     func didChangePositionBar(startTime: Float64)
 }
 
 class SHVideoTrimmerView: UIView {
+    static let MainColor = "MainThemeColor"
+    static let HandleColor = "HandleColor"
+    static let PositionBarColor = "PositionBarColor"
     
     final let handleWidth: CGFloat = 15
     
@@ -75,46 +78,55 @@ class SHVideoTrimmerView: UIView {
     var imageSetCount = 0
 
     
-    init(frame: CGRect, avAsset: AVAsset) {
+    init(frame: CGRect, avAsset: AVAsset, options: [String: UIColor]) {
         super.init(frame: frame)
+        setup(avAsset, options: options)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
+    
+    
+    private func setup(avAsset: AVAsset, options: [String: UIColor]) {
         self.avAsset = avAsset
         self.imageGenerator = AVAssetImageGenerator(asset: avAsset)
-
+        
         let size = getThumbnailFrameSize()
         
         getThumbnailFrames(size!)
         
         
         trimView.frame = CGRectMake(0, 0, frame.width, frame.height)
-        trimView.layer.borderColor = UIColor.yellowColor().CGColor
+        trimView.layer.borderColor = options[SHVideoTrimmerView.MainColor]?.CGColor ?? UIColor.yellowColor().CGColor
         trimView.layer.borderWidth = 2.0
         trimView.layer.cornerRadius = 2.0
         addSubview(trimView)
-
+        
         
         leftHandleView.frame = CGRectMake(0, 0, 15, frame.height)
-        leftHandleView.backgroundColor = UIColor.yellowColor()
+        leftHandleView.backgroundColor = options[SHVideoTrimmerView.MainColor] ?? UIColor.yellowColor()
         leftHandleView.userInteractionEnabled = true
         leftHandleView.layer.cornerRadius = 2.0
         addSubview(leftHandleView)
         
         let leftKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
-        leftKnobView.backgroundColor = UIColor.darkGrayColor()
+        leftKnobView.backgroundColor = options[SHVideoTrimmerView.HandleColor] ?? UIColor.darkGrayColor()
         leftKnobView.center = leftHandleView.center
         leftHandleView.addSubview(leftKnobView)
         
         let leftPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.leftHandlePan))
         leftHandleView.addGestureRecognizer(leftPanGestureRecognizer)
-
+        
         
         rightHandView.frame = CGRectMake(frame.width - handleWidth, 0, 15, frame.height)
-        rightHandView.backgroundColor = UIColor.yellowColor()
+        rightHandView.backgroundColor = options[SHVideoTrimmerView.MainColor] ?? UIColor.yellowColor()
         rightHandView.userInteractionEnabled = true
         rightHandView.layer.cornerRadius = 2.0
         addSubview(rightHandView)
         
         let rightKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
-        rightKnobView.backgroundColor = UIColor.darkGrayColor()
+        rightKnobView.backgroundColor = options[SHVideoTrimmerView.HandleColor] ?? UIColor.darkGrayColor()
         rightKnobView.center = CGPointMake(rightHandView.frame.width / 2, rightHandView.frame.height / 2)
         rightHandView.addSubview(rightKnobView)
         
@@ -127,9 +139,9 @@ class SHVideoTrimmerView: UIView {
         addSubview(rightShadingView)
         
         positionBar.frame = CGRectMake(0, 0, 5, frame.height)
-        positionBar.backgroundColor = UIColor.whiteColor()
+        positionBar.backgroundColor = options[SHVideoTrimmerView.PositionBarColor] ?? UIColor.whiteColor()
         positionBar.center = CGPointMake(leftHandleView.frame.maxX, center.y)
-        positionBar.layer.cornerRadius = 2
+        positionBar.layer.cornerRadius = 1
         positionBar.alpha = 0
         addSubview(positionBar)
         
@@ -137,15 +149,6 @@ class SHVideoTrimmerView: UIView {
         positionBar.addGestureRecognizer(positionBarGestureRecognizer)
         
         layer.zPosition = 1
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-    }
-    
-    
-    private func setup() {
-        
     }
     
     
@@ -185,7 +188,7 @@ class SHVideoTrimmerView: UIView {
             gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: self)
             leftShadingView.frame = CGRectMake(0, 0, leftHandleView.frame.origin.x, frame.height)
             
-            delegate?.changeStartTime(startTimeInMSec)
+            delegate?.didChangeStartTime(startTimeInMSec)
         }
     }
     
@@ -318,7 +321,6 @@ class SHVideoTrimmerView: UIView {
             }
             
             thumbnailView.frame.origin = CGPointMake(CGFloat(index) * size.width + handleWidth, 0)
-            thumbnailView.backgroundColor = UIColor.lightGrayColor()
             self.thumbnailViews.append(thumbnailView)
             self.addSubview(thumbnailView)
         }
@@ -342,9 +344,6 @@ class SHVideoTrimmerView: UIView {
     
         let position = CGFloat(playingTime / durationInMSec!) * thumbnailViewsWidth
         self.positionBar.center.x = position + self.handleWidth
-        
-        print("\(startTimeInMSec), \(playingTime), \(calculateBarPositionIntoTimeInMSec())")
-//        positionBarTimer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(SHVideoTrimmerView.hidePositionBar), userInfo: nil, repeats: false)
     }
     
     func hidePositionBar() {
@@ -356,10 +355,8 @@ class SHVideoTrimmerView: UIView {
     
     
     func calculateBarPositionIntoTimeInMSec() -> Float64 {
-        
         let deno = positionBar.center.x - handleWidth
         let nume = thumbnailViewsWidth
-        
         return Float64(deno / nume) * durationInMSec!
     }
 

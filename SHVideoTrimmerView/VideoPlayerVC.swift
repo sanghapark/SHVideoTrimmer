@@ -27,7 +27,6 @@ class VideoPlayerVC: UIViewController {
     var didFinishPlaying = false
     
     var toolBar = UIView(frame: CGRectZero)
-    var dismissButton = UIButton(frame: CGRectZero)
     var playButton = UIButton(frame: CGRectZero)
     
     var playingTimer: NSTimer?
@@ -77,29 +76,23 @@ class VideoPlayerVC: UIViewController {
             if let strongSelf = self {
                 if avAsset != nil {
                     dispatch_async(dispatch_get_main_queue(), { [strongSelf]
+                        
                         let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height / 20)
-                        strongSelf.trimmerView = SHVideoTrimmerView(frame: rect, avAsset: avAsset!)
+                        let options = [SHVideoTrimmerView.MainColor : UIColor.yellowColor(),
+                            SHVideoTrimmerView.HandleColor : UIColor.brownColor(),
+                            SHVideoTrimmerView.PositionBarColor: UIColor.whiteColor()]
+                        strongSelf.trimmerView = SHVideoTrimmerView(frame: rect, avAsset: avAsset!, options: options)
                         strongSelf.trimmerView!.backgroundColor = UIColor.clearColor()
                         strongSelf.view.addSubview(strongSelf.trimmerView!)
                         strongSelf.trimmerView!.delegate = self
                     })
                 }
             }
-
         }
-        
-        
-    }
-
-    
-    func disableButtons(){
-        playButton.enabled = false
-        dismissButton.enabled = false
     }
     
     
     func initViews() {
-        self.title = "비디오"
         self.view.backgroundColor = UIColor.blackColor()
         
         let toolBarHeight:CGFloat = 66
@@ -113,13 +106,7 @@ class VideoPlayerVC: UIViewController {
         blurView.frame = CGRectMake(0, 0, toolBar.frame.width, toolBar.frame.height)
         blurView.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
         toolBar.addSubview(blurView)
-        
-        dismissButton.setTitle("취소", forState: .Normal)
-        dismissButton.sizeToFit()
-        dismissButton.frame.origin.x = 15
-        dismissButton.center.y = toolBarHeight / 2
-        dismissButton.addTarget(self, action: #selector(VideoPlayerVC.dismiss(_:)), forControlEvents: .TouchUpInside)
-        toolBar.addSubview(dismissButton)
+
         
         
         playButton.setImage(UIImage(named: "video_play_solid"), forState: .Normal)
@@ -128,10 +115,6 @@ class VideoPlayerVC: UIViewController {
         playButton.addTarget(self, action: #selector(VideoPlayerVC.play(_:)), forControlEvents: .TouchUpInside)
         toolBar.addSubview(playButton)
         
-    }
-    
-    func dismiss(sender: UIButton) {
-        self.dismissViewControllerAnimated(true, completion: nil)
     }
     
     func play(sender: UIButton) {
@@ -144,12 +127,10 @@ class VideoPlayerVC: UIViewController {
             
             if didFinishPlaying {
                 let cmTime = CMTime(value: Int64(trimmerView!.startTimeInMSec), timescale: 1000)
-//                player.seekToTime(cmTime)
                 player.seekToTime(cmTime, toleranceBefore: kCMTimeZero, toleranceAfter: kCMTimeZero)
             }
         
             player.play()
-//            trimmerView!.displayCurrentPlayingTime(trimmerView!.startTimeInMSec)
             playButton.setImage(UIImage(named: "video_pause_solid"), forState: .Normal)
             playingTimer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: #selector(VideoPlayerVC.updatePlayingTime), userInfo: nil, repeats: true)
             
@@ -249,7 +230,7 @@ class VideoPlayerVC: UIViewController {
 }
 
 extension VideoPlayerVC: SHVideoTrimmerViewDelegate {
-    func changeStartTime(startTime: Float64) {
+    func didChangeStartTime(startTime: Float64) {
         guard let player = self.player else { return }
         let cmTime = CMTime(value: Int64(startTime), timescale: 1000)
         player.seekToTime(cmTime)
