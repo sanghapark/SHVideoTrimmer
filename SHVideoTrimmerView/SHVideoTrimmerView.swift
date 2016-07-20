@@ -91,7 +91,7 @@ class SHVideoTrimmerView: UIView {
     private func setup(avAsset: AVAsset, options: [String: UIColor]) {
         self.avAsset = avAsset
         self.imageGenerator = AVAssetImageGenerator(asset: avAsset)
-        
+        self.backgroundColor = UIColor.clearColor()
         let size = getThumbnailFrameSize()
         
         getThumbnailFrames(size!)

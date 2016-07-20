@@ -77,14 +77,13 @@ class VideoPlayerVC: UIViewController {
                 if avAsset != nil {
                     dispatch_async(dispatch_get_main_queue(), { [strongSelf]
                         
-                        let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, UIScreen.mainScreen().bounds.height / 20)
+                        let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, 35)
                         let options = [SHVideoTrimmerView.MainColor : UIColor.yellowColor(),
                             SHVideoTrimmerView.HandleColor : UIColor.brownColor(),
                             SHVideoTrimmerView.PositionBarColor: UIColor.whiteColor()]
                         strongSelf.trimmerView = SHVideoTrimmerView(frame: rect, avAsset: avAsset!, options: options)
-                        strongSelf.trimmerView!.backgroundColor = UIColor.clearColor()
-                        strongSelf.view.addSubview(strongSelf.trimmerView!)
                         strongSelf.trimmerView!.delegate = self
+                        strongSelf.view.addSubview(strongSelf.trimmerView!)
                     })
                 }
             }
