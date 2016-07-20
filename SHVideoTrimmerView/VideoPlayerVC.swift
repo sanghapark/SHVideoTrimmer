@@ -254,6 +254,13 @@ extension VideoPlayerVC: SHVideoTrimmerViewDelegate {
         let cmTime = CMTime(value: Int64(startTime), timescale: 1000)
         player.seekToTime(cmTime)
     }
+    
+    func didChangePositionBar(startTime: Float64) {
+        guard let player = self.player else { return }
+        player.pause()
+        let cmTime = CMTime(value: Int64(startTime), timescale: 1000)
+        player.seekToTime(cmTime)
+    }
 }
 
 extension PHAsset {

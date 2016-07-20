@@ -12,6 +12,7 @@ import AVFoundation
 
 protocol SHVideoTrimmerViewDelegate {
     func changeStartTime(startTime: Float64)
+    func didChangePositionBar(startTime: Float64)
 }
 
 class SHVideoTrimmerView: UIView {
@@ -89,9 +90,7 @@ class SHVideoTrimmerView: UIView {
         trimView.layer.borderWidth = 2.0
         trimView.layer.cornerRadius = 2.0
         addSubview(trimView)
-        
-        let selectionPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.selectionPan))
-        trimView.addGestureRecognizer(selectionPanGestureRecognizer)
+
         
         leftHandleView.frame = CGRectMake(0, 0, 15, frame.height)
         leftHandleView.backgroundColor = UIColor.yellowColor()
@@ -117,7 +116,6 @@ class SHVideoTrimmerView: UIView {
         let rightKnobView = UIView(frame: CGRectMake(0, 0, 2, frame.height / 2))
         rightKnobView.backgroundColor = UIColor.darkGrayColor()
         rightKnobView.center = CGPointMake(rightHandView.frame.width / 2, rightHandView.frame.height / 2)
-        print(rightHandView.center)
         rightHandView.addSubview(rightKnobView)
         
         let rightPanGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.rightHandlePan))
@@ -128,11 +126,15 @@ class SHVideoTrimmerView: UIView {
         addSubview(leftShadingView)
         addSubview(rightShadingView)
         
-        positionBar.frame = CGRectMake(0, 0, 4, frame.height)
-        positionBar.backgroundColor = UIColor.redColor()
-        positionBar.center.x = leftHandleView.frame.maxX
+        positionBar.frame = CGRectMake(0, 0, 5, frame.height)
+        positionBar.backgroundColor = UIColor.whiteColor()
+        positionBar.center = CGPointMake(leftHandleView.frame.maxX, center.y)
+        positionBar.layer.cornerRadius = 2
         positionBar.alpha = 0
         addSubview(positionBar)
+        
+        let positionBarGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(SHVideoTrimmerView.positionBarPan))
+        positionBar.addGestureRecognizer(positionBarGestureRecognizer)
         
         layer.zPosition = 1
     }
@@ -189,8 +191,6 @@ class SHVideoTrimmerView: UIView {
     
     
     func rightHandlePan(gestureRecognizer: UIPanGestureRecognizer) {
-
-        
         guard let view = gestureRecognizer.view else { return }
         guard let superview = view.superview else { return }
         
@@ -225,15 +225,26 @@ class SHVideoTrimmerView: UIView {
         }
     }
     
-    func selectionPan(gestureRecognizer: UIPanGestureRecognizer) {
-//        guard let view = gestureRecognizer.view else { return }
-//        guard let superview = view.superview else { return }
-//        if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
-//            let translation = gestureRecognizer.translationInView(superview)
-//            
-//        }
+
+    func positionBarPan(gestureRecognizer: UIPanGestureRecognizer) {
+        guard let view = gestureRecognizer.view else { return }
+        guard let superview = view.superview else { return }
+        if gestureRecognizer.state == UIGestureRecognizerState.Began || gestureRecognizer.state == UIGestureRecognizerState.Changed {
+            
+            let translation = gestureRecognizer.translationInView(superview)
+            
+            let futureCenterX = view.center.x + translation.x
+            
+            if futureCenterX >= leftHandleView.frame.maxX && futureCenterX <= rightHandView.frame.minX {
+                view.center.x = futureCenterX
+                let deno = view.center.x - handleWidth
+                let nume = thumbnailViewsWidth
+                let time = Float64(deno / nume) * durationInMSec!
+                delegate?.didChangePositionBar(time)
+            }
+            gestureRecognizer.setTranslation(CGPointMake(0, 0), inView: superview)
+        }
     }
-    
     
     private func getThumbnailFrameSize() -> CGSize? {
         guard let track = self.avAsset!.tracksWithMediaType(AVMediaTypeVideo).first else { return nil}
