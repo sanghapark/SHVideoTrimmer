@@ -5,8 +5,8 @@ You can select a certain interval of video and trim it out.
 
 ![ScreenShot](/img/img1.png)
 
-**How to use**
-```
+**Usage**
+```Swift
 let rect = CGRectMake(0, 0, UIScreen.mainScreen().bounds.width, 35)
 let options = 
     [SHVideoTrimmerView.MainColor : UIColor.yellowColor(),
@@ -18,7 +18,7 @@ self.view.addSubview(strongSelf.trimmerView!)
 ```
 
 **Delegate functions**
-```
+```Swift
 protocol SHVideoTrimmerViewDelegate {
     func didChangeStartTime(startTime: Float64)
     func didChangePositionBar(startTime: Float64)
