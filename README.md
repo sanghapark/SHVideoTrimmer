@@ -1,7 +1,7 @@
 # SHVideoTrimmer
 [iOS] video trimmer view
 
-You can select a certain interval of video and trim it out.
+You can select a particular interval of video and trim it out.
 
 ![ScreenShot](/img/img1.png)
 
